@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wishmessageapp
+  labels: { app: wishmessageapp }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: wishmessageapp }
+  template:
+    metadata:
+      labels: { app: wishmessageapp }
+    spec:
+      containers:
+        - name: wishmessageapp
+          image: IMAGE_PLACEHOLDER      # replaced by the pipeline
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /page.html, port: 8080 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /page.html, port: 8080 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: 500m, memory: 512Mi }

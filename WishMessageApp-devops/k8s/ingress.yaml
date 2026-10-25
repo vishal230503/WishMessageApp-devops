@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wishmessageapp
+  annotations:
+    kubernetes.io/ingress.class: nginx   # change for ALB/GKE/AGIC as needed
+spec:
+  rules:
+    - host: wish.example.com             # change to your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wishmessageapp
+                port: { number: 80 }

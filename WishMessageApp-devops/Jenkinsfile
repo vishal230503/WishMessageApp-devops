@@ -1,0 +1,34 @@
+pipeline {
+  agent any
+  tools { maven 'Maven3'; jdk 'JDK17' }   // configure these names in Jenkins > Tools
+  environment {
+    REGISTRY = 'docker.io/YOUR_DOCKERHUB_USER'
+    IMAGE    = "${REGISTRY}/wishmessageapp"
+    TAG      = "${env.BUILD_NUMBER}"
+  }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+    stage('Build')    { steps { sh 'mvn -B clean package' } }
+    stage('Docker Build') { steps { sh 'docker build -t $IMAGE:$TAG -t $IMAGE:latest .' } }
+    stage('Push') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                         usernameVariable: 'U', passwordVariable: 'P')]) {
+          sh 'echo $P | docker login -u $U --password-stdin'
+          sh 'docker push $IMAGE:$TAG && docker push $IMAGE:latest'
+        }
+      }
+    }
+    stage('Deploy to Kubernetes') {
+      steps {
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+          sh '''
+            sed "s|IMAGE_PLACEHOLDER|$IMAGE:$TAG|" k8s/deployment.yaml | kubectl apply -f -
+            kubectl apply -f k8s/service.yaml -f k8s/ingress.yaml
+            kubectl rollout status deployment/wishmessageapp
+          '''
+        }
+      }
+    }
+  }
+}

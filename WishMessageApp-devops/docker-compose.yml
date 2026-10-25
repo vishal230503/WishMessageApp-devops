@@ -1,0 +1,7 @@
+services:
+  wishapp:
+    build: .
+    image: wishmessageapp:latest
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
